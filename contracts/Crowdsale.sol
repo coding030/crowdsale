@@ -22,6 +22,11 @@ contract Crowdsale {
 		maxTokens = _maxTokens;
 	}
 
+	receive() external payable {
+		uint256 amount = msg.value / price;
+		buyTokens(amount * 1e18);	
+	}
+
 //    function transfer(address _to, uint256 _value) 
 //	  balanceOf comes also from Token.sol (mapping)
 //	  sender is the person who is calling the function

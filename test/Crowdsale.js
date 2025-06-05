@@ -78,7 +78,6 @@ describe('Crowdsale', () => {
 //	    https://hardhat.org/hardhat-chai-matchers/docs/reference#.emit
   	    await expect(transaction).to.emit(crowdsale, 'Buy').withArgs(amount, user1.address)
   	  })
-
   	})
 
   	describe('Failure', () => {
@@ -90,6 +89,27 @@ describe('Crowdsale', () => {
   	  it('rejects buying more than available', async () => {
   	  	await expect(crowdsale.connect(user1).buyTokens(tokens(2000000), { value: ether(200) })).to.be.reverted
   	  })
+  	})
+  })
+
+  describe('Sending ETH', () => {
+  	let transaction, result
+	let amount = ether(10) 
+
+  	describe('Success', () => {
+  	  beforeEach(async() => {
+  	  	transaction = await user1.sendTransaction({ to: crowdsale.address, value: amount})
+  	  	result = await transaction.wait()
+  	  })  	    
+
+  	  it('updates contracts ether balance', async() => {
+  	    expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(amount)
+  	  })
+
+  	  it('updates user token balance', async() => {
+  	    expect(await token.balanceOf(user1.address)).to.equal(tokens(100000))
+  	  })
+
   	})
   })
 })
