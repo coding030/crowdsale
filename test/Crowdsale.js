@@ -9,16 +9,21 @@ const ether = tokens
 describe('Crowdsale', () => {
   let crowdsale, token
   let accounts, deployer, user1
+  let pricePerEth
 
   beforeEach(async () => {
   	//load contracts
     const Crowdsale = await ethers.getContractFactory('Crowdsale')
     const Token = await ethers.getContractFactory('Token')
+    pricePerEth = tokens(10000)
 
     //deploy token
     token = await Token.deploy('Dapp University', 'DAPP', '1000000')
+// only in deploy script    
+//    await token.deployed()
     //deploy crowdsale
-    crowdsale = await Crowdsale.deploy(token.address, ether(10000), 1000000)
+    crowdsale = await Crowdsale.deploy(token.address, pricePerEth, 1000000)
+//    await crowdsale.deployed()
 
     //configure accouts
     accounts = await ethers.getSigners()
@@ -36,8 +41,22 @@ describe('Crowdsale', () => {
   	  expect(await crowdsale.name()).to.equal('Crowdsale')
   	})
 
+  	it('log', async () => {
+  	  console.log(await `${crowdsale.price()}`)
+// this is supposed to return a function
+  	  console.log(crowdsale.price)
+// this is supposed to return a promise
+  	  console.log(crowdsale.price())
+// this also is supposed to return a function
+  	  console.log(await crowdsale.price)
+// this is supposed to return the price in wei
+  	  console.log(await crowdsale.price())
+// this is supposed to return the price in Eth
+  	  console.log(ethers.utils.formatUnits(await crowdsale.price()), 'ether')
+    })
+
   	it('returns the price', async() => {
-  	  expect(await crowdsale.price()).to.equal(tokens(10000))
+  	  expect(await crowdsale.price()).to.equal(pricePerEth)
   	})
 
   	it('sends tokens to the Crowdsale contract', async() => {
@@ -94,7 +113,7 @@ describe('Crowdsale', () => {
 
   describe('Sending ETH', () => {
   	let transaction, result
-	let amount = ether(10) 
+	let amount = ether(10)
 
   	describe('Success', () => {
   	  beforeEach(async() => {
@@ -108,6 +127,9 @@ describe('Crowdsale', () => {
 
   	  it('updates user token balance', async() => {
   	    expect(await token.balanceOf(user1.address)).to.equal(tokens(100000))
+//  	    expect(await token.balanceOf(user1.address)).to.equal(amount)
+//        const expectedAmount = ether(10).mul(pricePerEth)
+//		expect(await token.balanceOf(user1.address)).to.equal(expectedAmount)
   	  })
 
   	})

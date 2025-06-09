@@ -27,6 +27,11 @@ contract Crowdsale {
 		buyTokens(amount * 1e18);	
 	}
 
+//	receive() external payable {
+//        uint256 amount = msg.value * price;
+//        buyTokens(amount);    
+//    }
+
 //    function transfer(address _to, uint256 _value) 
 //	  balanceOf comes also from Token.sol (mapping)
 //	  sender is the person who is calling the function
@@ -41,4 +46,13 @@ contract Crowdsale {
 		emit Buy(_amount, msg.sender);
 
 	}
+//	function buyTokens(uint256 _amount) public payable {
+//    	require(_amount == msg.value * price, "Incorrect ETH value sent");
+//    	require(token.balanceOf(address(this)) >= _amount, "Not enough tokens");
+//    	require(token.transfer(msg.sender, _amount), "failed to transfer tokens");
+//
+//	    tokensSold += _amount;
+//    	emit Buy(_amount, msg.sender);
+//    }
+
 }
