@@ -12,6 +12,7 @@ contract Crowdsale {
 	uint256 public tokensSold;
 
 	event Buy(uint256 _amount, address _buyer);
+	event Finalize(uint256 _tokensSold, uint256 _ethRaised);
 
 	constructor(
 		Token _token, 
@@ -22,6 +23,11 @@ contract Crowdsale {
 		token = _token;
 		price = _price;
 		maxTokens = _maxTokens;
+	}
+
+	modifier onlyOwner() {
+		require(msg.sender == owner, "Caller is not the owner");
+		_;
 	}
 
 	receive() external payable {
@@ -47,7 +53,11 @@ contract Crowdsale {
 		emit Buy(_amount, msg.sender);
 	}
 
-	function finalize() public {
+	function setPrice(uint256 _price) public onlyOwner {
+		price = _price;
+	}
+
+	function finalize() public onlyOwner {
 //		uint256 remainingTokens = token.balanceOf(address(this));
 //		token.transfer(owner, remainingTokens);
 		require(token.transfer(owner, token.balanceOf(address(this))));
@@ -58,5 +68,7 @@ contract Crowdsale {
 //.call returns
 		(bool sent, ) = owner.call{value: value }("");
 		require(sent);
+
+		emit Finalize(tokensSold, value);
 	}
 }
