@@ -10,6 +10,7 @@ contract Crowdsale {
 	uint256 public price;
 	uint256 public maxTokens;
 	uint256 public tokensSold;
+	uint256 public creationTime;
 	address[] public whiteList;
 
 	event Buy(uint256 _amount, address _buyer);
@@ -33,6 +34,7 @@ contract Crowdsale {
 	}
 
 	receive() external payable {
+		require(contained(msg.sender) == true);
 //		uint256 amount = msg.value / price;
 //		buyTokens(amount * 1e18);	
 		uint256 amount = msg.value * price;
@@ -43,10 +45,22 @@ contract Crowdsale {
 
 	function addAddress(address _address) public onlyOwner {
     	require(_address != address(0));
+    	require(contained(_address) == false);
+
 		whiteList.push(_address);
 
 		emit AddedAddress(_address);
 	}
+
+	function contained(address _address) public view returns (bool) {
+		for (uint256 i = 0; i < whiteList.length; i++) {
+			if (whiteList[i] == _address) {
+				return true;
+			}
+		} 
+		return false;
+	}
+
 
 //    function transfer(address _to, uint256 _value) 
 //	  balanceOf comes also from Token.sol (mapping)

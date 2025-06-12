@@ -72,15 +72,40 @@ describe('Crowdsale', () => {
 
   describe('Adding Address to Whitelist', () => {
     let add, added
+
+    beforeEach(async () => {
+      add = await crowdsale.connect(deployer).addAddress(user2.address)
+      added = await add.wait()
+    })
+
     describe('Success', () => {
-      beforeEach(async () => {
-        add = await crowdsale.connect(deployer).addAddress(user2.address)
-        added = await add.wait()
-      })
+//      beforeEach(async () => {
+//        add = await crowdsale.connect(deployer).addAddress(user2.address)
+//        added = await add.wait()
+//      })
 
       it('added address', async () => {
         expect(await crowdsale.whiteList(0)).to.equal(user2.address)
       })
+
+      it('emits AddedAddress event', async () => {
+        await expect(add).to.emit(crowdsale, "AddedAddress").withArgs(user2.address)
+      })
+    })
+
+    describe('Failure', async() => {
+//      beforeEach(async () => {
+//        add = await crowdsale.connect(deployer).addAddress(user2.address)
+//        added = await add.wait()
+//      })
+
+      it('rejects other user from adding address', async () => {
+        await expect(crowdsale.connect(user1).addAddress(user2.address)).to.be.reverted
+      })      
+
+      it('rejects adding address twice', async () => {
+        await expect(crowdsale.connect(deployer).addAddress(user2.address)).to.be.reverted
+      })      
     })
   })
 
@@ -128,11 +153,14 @@ describe('Crowdsale', () => {
 
   describe('Sending ETH', () => {
   	let transaction, result
-	let amount = ether(10)
-	let amountTokens = tokens(100000)
+	  let amount = ether(10)
+	  let amountTokens = tokens(100000)
+    let add, added
 
   	describe('Success', () => {
   	  beforeEach(async() => {
+        add = await crowdsale.connect(deployer).addAddress(user1.address)
+        added = await add.wait()
   	  	transactionEth = await user1.sendTransaction({ to: crowdsale.address, value: amount})
   	  	resultEth = await transactionEth.wait()
 //  	  	transactionToken = await crowdsale.connect(user1).buyTokens(amountTokens, { value: amount })
@@ -148,6 +176,17 @@ describe('Crowdsale', () => {
   	  })
 
   	})
+
+    describe('Failure', () => {
+      beforeEach(async() => {
+        add = await crowdsale.connect(deployer).addAddress(user1.address)
+        added = await add.wait()
+      })        
+
+      it('rejects user2 from sending ETH', async() => {
+        await expect(user2.sendTransaction({ to: crowdsale.address, value: amount})).to.be.reverted
+      })
+    })
   })
 
   describe('Updating Price', () => {
