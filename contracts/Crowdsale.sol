@@ -10,9 +10,11 @@ contract Crowdsale {
 	uint256 public price;
 	uint256 public maxTokens;
 	uint256 public tokensSold;
+	address[] public whiteList;
 
 	event Buy(uint256 _amount, address _buyer);
 	event Finalize(uint256 _tokensSold, uint256 _ethRaised);
+	event AddedAddress(address _newAddress);
 
 	constructor(
 		Token _token, 
@@ -38,6 +40,13 @@ contract Crowdsale {
 //		buyTokens(amount);	
 	}
 
+
+	function addAddress(address _address) public onlyOwner {
+    	require(_address != address(0));
+		whiteList.push(_address);
+
+		emit AddedAddress(_address);
+	}
 
 //    function transfer(address _to, uint256 _value) 
 //	  balanceOf comes also from Token.sol (mapping)

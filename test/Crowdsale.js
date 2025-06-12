@@ -29,6 +29,7 @@ describe('Crowdsale', () => {
     accounts = await ethers.getSigners()
     deployer = accounts[0]
     user1 = accounts[1]
+    user2 = accounts[2]
 
     //send tokens to crowdsale
     let transaction = await token.connect(deployer).transfer(crowdsale.address, tokens(1000000))
@@ -69,9 +70,23 @@ describe('Crowdsale', () => {
 
   })
 
+  describe('Adding Address to Whitelist', () => {
+    let add, added
+    describe('Success', () => {
+      beforeEach(async () => {
+        add = await crowdsale.connect(deployer).addAddress(user2.address)
+        added = await add.wait()
+      })
+
+      it('added address', async () => {
+        expect(await crowdsale.whiteList(0)).to.equal(user2.address)
+      })
+    })
+  })
+
   describe('Buying Tokens', () => {
   	let transaction, result
-	let amount = tokens(10000)
+	  let amount = tokens(10000)
   	
   	describe('Success', () => {
   	  beforeEach(async() => {
