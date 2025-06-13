@@ -19,11 +19,12 @@ describe('Crowdsale', () => {
 
     //deploy token
     token = await Token.deploy('Dapp University', 'DAPP', '1000000')
-// only in deploy script    
-//    await token.deployed()
+    await token.deployed()
     //deploy crowdsale
     crowdsale = await Crowdsale.deploy(token.address, pricePerEth, 1000000)
-//    await crowdsale.deployed()
+    await crowdsale.deployed()
+    const startTime = await crowdsale.creationTime()
+//    let provid = new ethers.JsonRpcProvider('http://localhost:8545')
 
     //configure accouts
     accounts = await ethers.getSigners()
@@ -74,7 +75,8 @@ describe('Crowdsale', () => {
     let add, added
 
     beforeEach(async () => {
-      add = await crowdsale.connect(deployer).addAddress(user2.address)
+//      add = await crowdsale.connect(deployer).addAddress(user2.address)
+      add = await crowdsale.connect(deployer).addAddressToMapping(user2.address)
       added = await add.wait()
     })
 
@@ -85,12 +87,13 @@ describe('Crowdsale', () => {
 //      })
 
       it('added address', async () => {
-        expect(await crowdsale.whiteList(0)).to.equal(user2.address)
+//        expect(await crowdsale.whiteList(0)).to.equal(user2.address)
+        expect(await crowdsale.whiteListMap(user2.address)).to.equal(true)
       })
 
-      it('emits AddedAddress event', async () => {
-        await expect(add).to.emit(crowdsale, "AddedAddress").withArgs(user2.address)
-      })
+//      it('emits AddedAddress event', async () => {
+//        await expect(add).to.emit(crowdsale, "AddedAddress").withArgs(user2.address)
+//      })
     })
 
     describe('Failure', async() => {
@@ -100,20 +103,33 @@ describe('Crowdsale', () => {
 //      })
 
       it('rejects other user from adding address', async () => {
-        await expect(crowdsale.connect(user1).addAddress(user2.address)).to.be.reverted
+//        await expect(crowdsale.connect(user1).addAddress(user2.address)).to.be.reverted
+        await expect(crowdsale.connect(user1).addAddressToMapping(user2.address)).to.be.reverted
       })      
 
-      it('rejects adding address twice', async () => {
-        await expect(crowdsale.connect(deployer).addAddress(user2.address)).to.be.reverted
-      })      
+//      it('rejects adding address twice', async () => {
+//        await expect(crowdsale.connect(deployer).addAddress(user2.address)).to.be.reverted
+//      })      
     })
   })
+
+//  describe('Checking for time window', () => {
+//    describe('Success', () => {
+//
+//      it('current time within time window', async () => {
+//        current = await provid.getBlock('latest')
+//        expect(await crowdsale.timeWindow(current)).to.equal(true)
+//      })
+//
+//    })
+//  })
 
   describe('Buying Tokens', () => {
   	let transaction, result
 	  let amount = tokens(10000)
   	
   	describe('Success', () => {
+
   	  beforeEach(async() => {
   	  	transaction = await crowdsale.connect(user1).buyTokens(amount, { value: ether(1) })
   	  	result = await transaction.wait()
@@ -158,8 +174,10 @@ describe('Crowdsale', () => {
     let add, added
 
   	describe('Success', () => {
+
   	  beforeEach(async() => {
-        add = await crowdsale.connect(deployer).addAddress(user1.address)
+//        add = await crowdsale.connect(deployer).addAddress(user1.address)
+        add = await crowdsale.connect(deployer).addAddressToMapping(user1.address)
         added = await add.wait()
   	  	transactionEth = await user1.sendTransaction({ to: crowdsale.address, value: amount})
   	  	resultEth = await transactionEth.wait()
@@ -178,8 +196,10 @@ describe('Crowdsale', () => {
   	})
 
     describe('Failure', () => {
+
       beforeEach(async() => {
-        add = await crowdsale.connect(deployer).addAddress(user1.address)
+//        add = await crowdsale.connect(deployer).addAddress(user1.address)
+        add = await crowdsale.connect(deployer).addAddressToMapping(user1.address)
         added = await add.wait()
       })        
 

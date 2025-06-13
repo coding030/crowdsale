@@ -10,8 +10,11 @@ contract Crowdsale {
 	uint256 public price;
 	uint256 public maxTokens;
 	uint256 public tokensSold;
+	uint256 public minContribution;
+	uint256 public maxContribution;
 	uint256 public creationTime;
-	address[] public whiteList;
+///	address[] public whiteList;
+    mapping(address => bool) public whiteListMap;
 
 	event Buy(uint256 _amount, address _buyer);
 	event Finalize(uint256 _tokensSold, uint256 _ethRaised);
@@ -26,6 +29,9 @@ contract Crowdsale {
 		token = _token;
 		price = _price;
 		maxTokens = _maxTokens;
+		minContribution = 10;
+		maxContribution = 10000;
+		creationTime = block.timestamp;
 	}
 
 	modifier onlyOwner() {
@@ -34,7 +40,9 @@ contract Crowdsale {
 	}
 
 	receive() external payable {
-		require(contained(msg.sender) == true);
+///		require(contained(msg.sender) == true);
+		require(whiteListMap[msg.sender] == true);
+		require(timeWindow(block.timestamp) == true);
 //		uint256 amount = msg.value / price;
 //		buyTokens(amount * 1e18);	
 		uint256 amount = msg.value * price;
@@ -42,22 +50,40 @@ contract Crowdsale {
 //		buyTokens(amount);	
 	}
 
-
-	function addAddress(address _address) public onlyOwner {
+	function addAddressToMapping(address _address) public onlyOwner {
     	require(_address != address(0));
-    	require(contained(_address) == false);
 
-		whiteList.push(_address);
-
-		emit AddedAddress(_address);
+    	whiteListMap[_address] = true;
 	}
 
-	function contained(address _address) public view returns (bool) {
-		for (uint256 i = 0; i < whiteList.length; i++) {
-			if (whiteList[i] == _address) {
-				return true;
-			}
-		} 
+
+///	function addAddress(address _address) public onlyOwner {
+///    	require(_address != address(0));
+///    	require(contained(_address) == false);
+///
+///		whiteList.push(_address);
+///
+///		emit AddedAddress(_address);
+///	}
+
+///	function contained(address _address) public view returns (bool) {
+///		for (uint256 i = 0; i < whiteList.length; i++) {
+///			if (whiteList[i] == _address) {
+///				return true;
+///			}
+///		} 
+///		return false;
+///	}
+
+//	function tokenAmount(address _address) public view returns (uint256 _amount) {
+//
+//	}
+
+	function timeWindow(uint256 _timestamp) public view returns (bool) {
+		if ((_timestamp >= creationTime - 1 days) && 
+			(_timestamp <= creationTime + 4 weeks)) {
+			return true;
+		}
 		return false;
 	}
 
