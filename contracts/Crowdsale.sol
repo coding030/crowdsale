@@ -15,6 +15,7 @@ contract Crowdsale {
 	uint256 public creationTime;
 ///	address[] public whiteList;
     mapping(address => bool) public whiteListMap;
+    mapping(address => uint256) public totalBought;
 
 	event Buy(uint256 _amount, address _buyer);
 	event Finalize(uint256 _tokensSold, uint256 _ethRaised);
@@ -29,8 +30,8 @@ contract Crowdsale {
 		token = _token;
 		price = _price;
 		maxTokens = _maxTokens;
-		minContribution = 10;
-		maxContribution = 10000;
+		minContribution = 10 * 1e18;
+		maxContribution = 100000 * 1e18;
 		creationTime = block.timestamp;
 	}
 
@@ -42,18 +43,20 @@ contract Crowdsale {
 	receive() external payable {
 ///		require(contained(msg.sender) == true);
 		require(whiteListMap[msg.sender] == true);
-		require(timeWindow(block.timestamp) == true);
-//		uint256 amount = msg.value / price;
-//		buyTokens(amount * 1e18);	
+//		require(timeWindow(block.timestamp) == true);
+		require(msg.value * price / 1e18 >= minContribution, "Must purchase at least 10 tokens");
+		require(msg.value * price / 1e18 <= maxContribution, "Can purchase max 100000 tokens");
+		require((totalBought[msg.sender] + msg.value * price / 1e18) <= maxContribution, "Limit of 100000 for token purchase reached");
 		uint256 amount = msg.value * price;
 		buyTokens(amount / 1e18);	
-//		buyTokens(amount);	
 	}
 
 	function addAddressToMapping(address _address) public onlyOwner {
     	require(_address != address(0));
 
     	whiteListMap[_address] = true;
+
+    	emit AddedAddress(_address);
 	}
 
 
@@ -92,15 +95,17 @@ contract Crowdsale {
 //	  balanceOf comes also from Token.sol (mapping)
 //	  sender is the person who is calling the function
 	function buyTokens(uint256 _amount) public payable {
-//		require(msg.value == (_amount / 1e18) * price);
 		require(msg.value == (_amount * 1e18) / price);
 		require(token.balanceOf(address(this)) >= _amount);
 		require(token.transfer(msg.sender, _amount),'failed to transfer tokens');
 
 		tokensSold += _amount;
-		
+//*1e18???		
+		totalBought[msg.sender] += _amount;
+
 		emit Buy(_amount, msg.sender);
 	}
+
 
 	function setPrice(uint256 _price) public onlyOwner {
 		price = _price;

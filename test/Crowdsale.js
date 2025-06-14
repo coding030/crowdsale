@@ -1,5 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { MerkleTree } = require('merkletreejs')
+const SHA256 = require('crypto-js/sha256')
 
 const tokens = (n) => {
   return ethers.utils.parseUnits(n.toString(), 'ether')
@@ -91,9 +93,9 @@ describe('Crowdsale', () => {
         expect(await crowdsale.whiteListMap(user2.address)).to.equal(true)
       })
 
-//      it('emits AddedAddress event', async () => {
-//        await expect(add).to.emit(crowdsale, "AddedAddress").withArgs(user2.address)
-//      })
+      it('emits AddedAddress event', async () => {
+        await expect(add).to.emit(crowdsale, "AddedAddress").withArgs(user2.address)
+      })
     })
 
     describe('Failure', async() => {
@@ -110,6 +112,35 @@ describe('Crowdsale', () => {
 //      it('rejects adding address twice', async () => {
 //        await expect(crowdsale.connect(deployer).addAddress(user2.address)).to.be.reverted
 //      })      
+    })
+  })
+
+  describe('MerkleTree', () => {
+    let addresses = []
+    let element
+    let leaves, tree, root
+
+    beforeEach(async () => {
+      accounts.forEach(element => {
+        addresses.push(element.address)
+      })
+      leaves = addresses.map((add) => SHA256(add))
+      tree = new MerkleTree(leaves, SHA256)
+      root = tree.getRoot().toString('hex')
+    })    
+
+    it('shows array content', () => {
+      console.log(addresses)
+    })
+
+    it('verifies addresses', () => {
+      const verifyAddress = (add) => {
+        const hashedAddress = SHA256(add)
+        const proof = tree.getProof(hashedAddress)
+        const verified = tree.verify(proof, hashedAddress, root)
+        console.log(`${add} is ${verified ? "whitelisted" : "not whitelisted"}.`)
+      }
+      verifyAddress(accounts[0].address)
     })
   })
 
@@ -171,6 +202,7 @@ describe('Crowdsale', () => {
   	let transaction, result
 	  let amount = ether(10)
 	  let amountTokens = tokens(100000)
+    let insufficientAmount = ether(0.0009)
     let add, added
 
   	describe('Success', () => {
@@ -203,9 +235,27 @@ describe('Crowdsale', () => {
         added = await add.wait()
       })        
 
-      it('rejects user2 from sending ETH', async() => {
+      it('rejects non-whitelisted user from sending ETH', async() => {
         await expect(user2.sendTransaction({ to: crowdsale.address, value: amount})).to.be.reverted
       })
+
+      it('rejects insufficient token purchase', async() => {
+        await expect(user1.sendTransaction({ to: crowdsale.address, value: insufficientAmount})).to.be.reverted
+      })
+
+      it('rejects purchase of more than max tokens at once', async() => {
+        await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(10.1)})).to.be.reverted
+      })
+
+      it('rejects purchase of more than max tokens in total', async() => {
+        transactionEth = await user1.sendTransaction({ to: crowdsale.address, value: ether(10)})
+        resultEth = await transactionEth.wait()
+        console.log(await token.balanceOf(user1.address))
+        console.log(await crowdsale.totalBought(user1.address))
+        await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(0.1)})).to.be.reverted
+      })
+
+
     })
   })
 
