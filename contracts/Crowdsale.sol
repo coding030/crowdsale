@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Token.sol";
+import "hardhat/console.sol";
 
 contract Crowdsale {
 	string public name ="Crowdsale";
@@ -29,8 +30,10 @@ contract Crowdsale {
 		token = _token;
 		price = _price;
 		maxTokens = _maxTokens;
-		minContribution = 10 * 1e18;
-		maxContribution = 100000 * 1e18;
+//		minContribution = 10 * 1e18;
+//		maxContribution = 100000 * 1e18;
+		minContribution = 10;
+		maxContribution = 100000;
 		creationTime = block.timestamp;
 	}
 
@@ -46,22 +49,37 @@ contract Crowdsale {
 	}
 
 	receive() external payable withinTimeWindow {
+//		console.log("in1");
 		require(whiteListMap[msg.sender] == true);
+//		console.log("in2");
 //		require(timeWindow(block.timestamp) == true);
+//		console.log("in3");
+//		console.log("msg.value", msg.value);
+//		console.log("price", price);
 		require(
-			msg.value * price / 1e18 >= minContribution, 
+//			msg.value * price / 1e18 >= minContribution, 
+			msg.value / price >= minContribution, 
 			"Must purchase at least 10 tokens"
 		);
+//		console.log("in4");
 		require(
-			msg.value * price / 1e18 <= maxContribution, 
+//			msg.value * price / 1e18 <= maxContribution, 
+			msg.value / price <= maxContribution, 
 			"Can purchase max 100000 tokens"
 		);
+//		console.log("in5");
+//		console.log("totalBought", totalBought[msg.sender]);
 		require(
-			(totalBought[msg.sender] + msg.value * price / 1e18) <= maxContribution, 
+//			(totalBought[msg.sender] + msg.value * price / 1e18) <= maxContribution, 
+			(totalBought[msg.sender] / 1e18 + msg.value / price) <= maxContribution, 
 			"Limit of 100000 for token purchase reached"
 		);
-		uint256 amount = msg.value * price;
-		buyTokens(amount / 1e18);	
+//		console.log("in6");
+//		uint256 amount = msg.value * price;
+		uint256 amount = msg.value / price;
+//		console.log("receive amount: ", amount);
+//		buyTokens(amount / 1e18);	
+		buyTokens(amount * 1e18);	
 	}
 
 	function addAddressToMapping(address _address) public onlyOwner {
@@ -112,7 +130,11 @@ contract Crowdsale {
 //	  balanceOf comes also from Token.sol (mapping)
 //	  sender is the person who is calling the function
 	function buyTokens(uint256 _amount) public payable {
-		require(msg.value == (_amount * 1e18) / price);
+//		console.log("buyTokens: amount ", _amount);
+//		console.log("buyTokens: msg.value ",msg.value);
+//		console.log("buyTokens: price ",price);
+//		require(msg.value == (_amount * 1e18) / price);
+		require(msg.value == (_amount / 1e18) * price);
 		require(token.balanceOf(address(this)) >= _amount);
 		require(token.transfer(msg.sender, _amount),'failed to transfer tokens');
 
@@ -128,17 +150,24 @@ contract Crowdsale {
 	}
 
 	function finalize() public onlyOwner {
+//		console.log("in finalize1");
 //		uint256 remainingTokens = token.balanceOf(address(this));
 //		token.transfer(owner, remainingTokens);
 		require(token.transfer(owner, token.balanceOf(address(this))));
+//		console.log("in finalize2");
 // address(this).balance give the ETH balance of this contract
 // .call let's you send a message or basically a transaction to a different account
 		uint256 value = address(this).balance;
+//		console.log("in finalize3");
 //this send the entire eth balance
 //.call returns
 		(bool sent, ) = owner.call{value: value }("");
+//		console.log("in finalize4");
 		require(sent);
+//		console.log("in finalize5");
 
 		emit Finalize(tokensSold, value);
+//		console.log("in finalize6");
+
 	}
 }

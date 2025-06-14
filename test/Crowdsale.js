@@ -18,7 +18,7 @@ describe('Crowdsale', () => {
   	//load contracts
     const Crowdsale = await ethers.getContractFactory('Crowdsale')
     const Token = await ethers.getContractFactory('Token')
-    pricePerEth = tokens(10000)
+    pricePerEth = tokens(0.025)
 
     //deploy token
     token = await Token.deploy('Dapp University', 'DAPP', '1000000')
@@ -189,7 +189,7 @@ describe('Crowdsale', () => {
   	describe('Success', () => {
 
   	  beforeEach(async() => {
-  	  	transaction = await crowdsale.connect(user1).buyTokens(amount, { value: ether(1) })
+  	  	transaction = await crowdsale.connect(user1).buyTokens(amount, { value: ether(250) })
   	  	result = await transaction.wait()
   	  })  	    
 
@@ -199,7 +199,7 @@ describe('Crowdsale', () => {
   	  })
 
   	  it('updates contracts ether balance', async() => {
-  	    expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(ether(1))
+  	    expect(await ethers.provider.getBalance(crowdsale.address)).to.equal(ether(250))
   	  })
 
   	  it('updates tokens sold', async() => {
@@ -220,7 +220,7 @@ describe('Crowdsale', () => {
   	  })
 
   	  it('rejects buying more than available', async () => {
-  	  	await expect(crowdsale.connect(user1).buyTokens(tokens(2000000), { value: ether(200) })).to.be.reverted
+  	  	await expect(crowdsale.connect(user1).buyTokens(tokens(2000000), { value: ether(800) })).to.be.reverted
   	  })
   	})
   })
@@ -249,7 +249,7 @@ describe('Crowdsale', () => {
   	  })
 
   	  it('updates user token balance', async() => {
-  	    expect(await token.balanceOf(user1.address)).to.equal(tokens(100000))
+  	    expect(await token.balanceOf(user1.address)).to.equal(tokens(400))
   	  })
 
   	})
@@ -271,14 +271,14 @@ describe('Crowdsale', () => {
       })
 
       it('rejects purchase of more than max tokens at once', async() => {
-        await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(10.1)})).to.be.reverted
+        await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(2501)})).to.be.reverted
       })
 
       it('rejects purchase of more than max tokens in total', async() => {
-        transactionEth = await user1.sendTransaction({ to: crowdsale.address, value: ether(10)})
+        transactionEth = await user1.sendTransaction({ to: crowdsale.address, value: ether(2500)})
         resultEth = await transactionEth.wait()
-        console.log(await token.balanceOf(user1.address))
-        console.log(await crowdsale.totalBought(user1.address))
+//        console.log(await token.balanceOf(user1.address))
+//        console.log(await crowdsale.totalBought(user1.address))
         await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(0.1)})).to.be.reverted
       })
 
@@ -317,13 +317,13 @@ describe('Crowdsale', () => {
   describe('Finalizing Sale', () => {
   	let transaction, result
   	let amount = tokens(10000)
-  	let value = ether(1)
+  	let value = ether(250)
 
   	describe('Success', () => {
   	  beforeEach(async () => {
   		transaction = await crowdsale.connect(user1).buyTokens(amount, { value: value})
   		result = await transaction.wait()
-
+//      console.log("going on")
   		transaction = await crowdsale.connect(deployer).finalize()
   	    result = await transaction.wait()
   	  })
