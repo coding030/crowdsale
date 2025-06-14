@@ -13,7 +13,6 @@ contract Crowdsale {
 	uint256 public minContribution;
 	uint256 public maxContribution;
 	uint256 public creationTime;
-///	address[] public whiteList;
     mapping(address => bool) public whiteListMap;
     mapping(address => uint256) public totalBought;
 
@@ -40,13 +39,27 @@ contract Crowdsale {
 		_;
 	}
 
-	receive() external payable {
-///		require(contained(msg.sender) == true);
+	modifier withinTimeWindow() {
+		require(block.timestamp >= creationTime);
+		require(block.timestamp <= creationTime + 4 weeks);
+		_;
+	}
+
+	receive() external payable withinTimeWindow {
 		require(whiteListMap[msg.sender] == true);
 //		require(timeWindow(block.timestamp) == true);
-		require(msg.value * price / 1e18 >= minContribution, "Must purchase at least 10 tokens");
-		require(msg.value * price / 1e18 <= maxContribution, "Can purchase max 100000 tokens");
-		require((totalBought[msg.sender] + msg.value * price / 1e18) <= maxContribution, "Limit of 100000 for token purchase reached");
+		require(
+			msg.value * price / 1e18 >= minContribution, 
+			"Must purchase at least 10 tokens"
+		);
+		require(
+			msg.value * price / 1e18 <= maxContribution, 
+			"Can purchase max 100000 tokens"
+		);
+		require(
+			(totalBought[msg.sender] + msg.value * price / 1e18) <= maxContribution, 
+			"Limit of 100000 for token purchase reached"
+		);
 		uint256 amount = msg.value * price;
 		buyTokens(amount / 1e18);	
 	}
@@ -57,6 +70,10 @@ contract Crowdsale {
     	whiteListMap[_address] = true;
 
     	emit AddedAddress(_address);
+	}
+
+	function getTime() public view returns (uint256) {
+		return block.timestamp;
 	}
 
 
@@ -82,13 +99,13 @@ contract Crowdsale {
 //
 //	}
 
-	function timeWindow(uint256 _timestamp) public view returns (bool) {
-		if ((_timestamp >= creationTime - 1 days) && 
-			(_timestamp <= creationTime + 4 weeks)) {
-			return true;
-		}
-		return false;
-	}
+//	function timeWindow(uint256 _timestamp) public view returns (bool) {
+//		if ((_timestamp >= creationTime - 1 days) && 
+//			(_timestamp <= creationTime + 4 weeks)) {
+//			return true;
+//		}
+//		return false;
+//	}
 
 
 //    function transfer(address _to, uint256 _value) 
@@ -100,7 +117,6 @@ contract Crowdsale {
 		require(token.transfer(msg.sender, _amount),'failed to transfer tokens');
 
 		tokensSold += _amount;
-//*1e18???		
 		totalBought[msg.sender] += _amount;
 
 		emit Buy(_amount, msg.sender);

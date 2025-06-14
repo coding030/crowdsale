@@ -12,6 +12,7 @@ describe('Crowdsale', () => {
   let crowdsale, token
   let accounts, deployer, user1
   let pricePerEth
+  let startTime
 
   beforeEach(async () => {
   	//load contracts
@@ -25,7 +26,7 @@ describe('Crowdsale', () => {
     //deploy crowdsale
     crowdsale = await Crowdsale.deploy(token.address, pricePerEth, 1000000)
     await crowdsale.deployed()
-    const startTime = await crowdsale.creationTime()
+    startTime = await crowdsale.creationTime()
 //    let provid = new ethers.JsonRpcProvider('http://localhost:8545')
 
     //configure accouts
@@ -144,16 +145,42 @@ describe('Crowdsale', () => {
     })
   })
 
-//  describe('Checking for time window', () => {
-//    describe('Success', () => {
-//
+  describe('Checking for time window', () => {
+    let add, added
+    describe('Success', () => {
+      it('current timestamp is after release timestamp', async() => {
+//        const currentBlock = await provid.getBlock('latest')
+        const currentTime = await crowdsale.getTime()
+//        console.log(currentBlock)
+        console.log(currentTime)
+        expect(currentTime).to.be.gte(startTime)
+      })
 //      it('current time within time window', async () => {
 //        current = await provid.getBlock('latest')
 //        expect(await crowdsale.timeWindow(current)).to.equal(true)
 //      })
-//
-//    })
-//  })
+    })
+
+    describe('Failure', () => {
+//  increase time by 4 weeks + 1 second      
+      const timeIncrease = (60*60*24*7*4)+1
+      let newTime
+
+      beforeEach(async() => {
+        add = await crowdsale.connect(deployer).addAddressToMapping(user1.address)
+        added = await add.wait()
+      }) 
+
+      it('cannot receive ETH after timewindow', async () => {
+        newTime = await ethers.provider.send("evm_increaseTime", [timeIncrease])
+        const currentTime = await crowdsale.getTime()
+        console.log(currentTime)
+        console.log(newTime)
+        await expect(user1.sendTransaction({ to: crowdsale.address, value: ether(1)})).to.be.reverted
+      })
+    })
+
+  })
 
   describe('Buying Tokens', () => {
   	let transaction, result
